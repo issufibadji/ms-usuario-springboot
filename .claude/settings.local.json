@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:/Dev/DevWeb/usuario-api\" rev-parse --show-toplevel)",
+      "Read(//c/Dev/DevWeb/**)"
+    ]
+  }
+}
