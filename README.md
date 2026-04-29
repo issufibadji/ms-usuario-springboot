@@ -4,7 +4,7 @@ Microserviço RESTful responsável pelo gerenciamento de usuários, endereços e
 
 ## Diagrama de arquitetura
 
-![Arquitetura usuario-api](src/img/arquitetura.jpg)
+![Arquitetura usuario-api](src/img/arquitetura.svg)
 
 ## Posição na arquitetura
 
