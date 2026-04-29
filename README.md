@@ -2,6 +2,10 @@
 
 Microserviço RESTful responsável pelo gerenciamento de usuários, endereços e telefones dentro do ecossistema **BFF Agendador de Tarefas**. É consumido exclusivamente pelo BFF via Feign Client HTTP e persiste dados em PostgreSQL.
 
+## Diagrama de arquitetura
+
+![Arquitetura usuario-api](src/img/arquitetura.jpg)
+
 ## Posição na arquitetura
 
 ```text

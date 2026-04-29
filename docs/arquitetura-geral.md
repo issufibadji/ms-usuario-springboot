@@ -1,5 +1,9 @@
 # Arquitetura Geral
 
+## Diagrama
+
+![Arquitetura usuario-api](../src/img/arquitetura.svg)
+
 ## Ecossistema: BFF Agendador de Tarefas
 
 A `usuario-api` é um **microserviço** dentro de um sistema maior. Ela nunca é chamada diretamente pelo front-end — toda comunicação passa pelo **BFF (Backend for Frontend)**.
@@ -44,6 +48,7 @@ A `usuario-api` é um **microserviço** dentro de um sistema maior. Ela nunca é
 ### Como o BFF consome esta API
 
 O BFF usa **Spring Cloud OpenFeign** para comunicar com a `usuario-api`. Ele:
+
 1. Recebe a requisição do Angular com JWT no header
 2. Repassa o token via `Authorization: Bearer <token>` para a `usuario-api`
 3. Retorna a resposta ao Angular
@@ -88,11 +93,13 @@ A `usuario-api` segue uma **Layered Architecture** com separação explícita en
 ## Camadas internas
 
 ### Controller
+
 - Única classe: `UsuarioController`
 - Recebe requisições do BFF, valida entrada e devolve respostas
 - Não contém lógica de negócio — delega ao serviço
 
 ### Business (Service)
+
 - `UsuarioService` — CRUD de usuários, endereços e telefones; geração e validação de JWT
 - `ViaCepService` — validação de CEP e chamada ao cliente Feign externo
 
