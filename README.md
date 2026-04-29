@@ -1,6 +1,23 @@
 # usuario-api
 
-API RESTful para gerenciamento de usuários, endereços e telefones, construída com Spring Boot 3.5, Java 26 e autenticação JWT. Integra-se com o serviço ViaCEP para consulta de endereços por CEP.
+Microserviço RESTful responsável pelo gerenciamento de usuários, endereços e telefones dentro do ecossistema **BFF Agendador de Tarefas**. É consumido exclusivamente pelo BFF via Feign Client HTTP e persiste dados em PostgreSQL.
+
+## Posição na arquitetura
+
+```text
+Angular SPA (:4200)
+      │
+      ▼ HTTP/REST
+BFF Agendador de Tarefas
+      │
+      ├──► usuario-api  (:8080)  ◄── este serviço → PostgreSQL (:5432)
+      ├──► agendador    (:8090?)              → MongoDB (:27017)
+      └──► notificacao                        → ViaCEP (externo)
+```
+
+O BFF é o único cliente direto desta API. Ele se autentica com JWT e repassa as chamadas vindas do front-end Angular para os microserviços corretos.
+
+Veja a documentação completa do ecossistema em [docs/arquitetura-geral.md](docs/arquitetura-geral.md).
 
 ## Tecnologias
 
@@ -8,10 +25,9 @@ API RESTful para gerenciamento de usuários, endereços e telefones, construída
 | --- | --- |
 | Java | 26 |
 | Spring Boot | 3.5.0 |
-| Spring Security | (via Boot) |
+| Spring Security + JWT | (via Boot / jjwt 0.12.6) |
 | Spring Cloud OpenFeign | 2024.0.1 |
 | PostgreSQL | 15+ |
-| JWT (jjwt) | 0.12.6 |
 | Springdoc OpenAPI | 2.8.9 |
 | Gradle | 8.13 |
 
@@ -56,7 +72,9 @@ java -jar build/libs/usuario-0.0.1-SNAPSHOT.jar
 
 ## Documentação interativa (Swagger)
 
-Acesse <http://localhost:8080/swagger-ui.html> para explorar todos os endpoints via interface gráfica.
+Acesse <http://localhost:8080/swagger-ui.html> para explorar todos os endpoints.
+
+> Em produção, o Swagger é acessado pelo BFF ou equipe de desenvolvimento — não é exposto diretamente ao usuário final.
 
 ## Endpoints principais
 
@@ -73,21 +91,29 @@ Acesse <http://localhost:8080/swagger-ui.html> para explorar todos os endpoints 
 | POST | `/usuario/telefone` | Adicionar telefone | JWT |
 | PUT | `/usuario/telefone?id=` | Atualizar telefone | JWT |
 
-Consulte [docs/endpoints.md](docs/endpoints.md) para detalhes completos de payloads e respostas.
+O BFF chama estes endpoints passando o token JWT recebido do Angular no header `Authorization`.
+
+Consulte [docs/endpoints.md](docs/endpoints.md) para detalhes de payloads e respostas.
 
 ## Autenticação
 
-A API usa **JWT Bearer Token**. Após fazer login, inclua o token no header de todas as requisições protegidas:
+A API usa **JWT Bearer Token** com sessão `STATELESS`. O fluxo típico no ecossistema:
+
+1. Angular envia credenciais ao BFF
+2. BFF chama `POST /usuario/login` neste serviço
+3. Este serviço valida e retorna o token JWT
+4. BFF repassa o token ao Angular
+5. Nas chamadas seguintes, o Angular envia o token → BFF o inclui no header → este serviço valida
 
 ```http
 Authorization: Bearer <token>
 ```
 
-Os tokens expiram em **1 hora**.
+Tokens expiram em **1 hora**.
 
 ## Usuários padrão (seed)
 
-Ao iniciar pela primeira vez com banco vazio, dois usuários são criados automaticamente:
+Ao iniciar com banco vazio, dois usuários são criados automaticamente:
 
 | E-mail | Senha |
 | --- | --- |
@@ -98,7 +124,7 @@ Ao iniciar pela primeira vez com banco vazio, dois usuários são criados automa
 
 ```text
 src/main/java/com/issufibadji/usuario/
-├── controller/          # Endpoints REST
+├── controller/          # Endpoints REST consumidos pelo BFF
 ├── business/            # Lógica de negócio e DTOs
 │   └── dto/
 ├── infrastructure/
@@ -109,7 +135,16 @@ src/main/java/com/issufibadji/usuario/
 │   └── exceptions/      # Exceções customizadas e handler global
 ```
 
-Veja a documentação completa em [docs/](docs/).
+## Documentação completa
+
+| Documento | Conteúdo |
+| --- | --- |
+| [docs/arquitetura-geral.md](docs/arquitetura-geral.md) | Ecossistema BFF, camadas internas, fluxos |
+| [docs/endpoints.md](docs/endpoints.md) | Todos os endpoints com payloads |
+| [docs/seguranca.md](docs/seguranca.md) | JWT, Spring Security, fluxo de auth |
+| [docs/modelo-dados.md](docs/modelo-dados.md) | Entidades JPA, ERD, DTOs |
+| [docs/integracoes.md](docs/integracoes.md) | BFF consumer, ViaCEP |
+| [docs/infraestrutura.md](docs/infraestrutura.md) | Banco de dados, CI/CD, SonarQube |
 
 ## CI/CD
 
@@ -117,13 +152,11 @@ Pull Requests para `master` disparam build + testes automáticos via GitHub Acti
 
 ## Qualidade de código
 
-Análise estática configurada com **SonarQube**:
-
 ```bash
 ./gradlew sonarqube
 ```
 
-> Requer instância SonarQube rodando em <http://localhost:9000>.
+> Requer instância SonarQube em <http://localhost:9000>.
 
 ## Licença
 
